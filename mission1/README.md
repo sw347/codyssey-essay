@@ -1,6 +1,6 @@
 # movie-tier-list
 
-### gemini: [링크](https://chatgpt.com/share/6aec68b6-cefc-83ee-91d0-ac7cd9d91b3b)
+### chatgpt: [링크](https://chatgpt.com/share/6aec68b6-cefc-83ee-91d0-ac7cd9d91b3b)
 
 ### claude:
 
