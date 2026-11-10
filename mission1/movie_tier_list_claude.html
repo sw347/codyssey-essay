@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Movie Tier List</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Gowun+Batang:wght@400;700&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #2a1a12;
+        --bg2: #14100e;
+        --gold: #d4af37;
+        --gold2: #f3d77a;
+        --red: #7a1420;
+        --red2: #a31c2b;
+        --text: #f1e4c8;
+        --muted: #a8957a;
+        --S: #d4af37;
+        --A: #e8832a;
+        --B: #e6cf3a;
+        --C: #4ea85a;
+        --D: #7d7d7d;
+        box-sizing: border-box;
+        color-scheme: dark;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Gowun Batang", "Noto Serif KR", Georgia, serif;
+        background: radial-gradient(
+            ellipse at 50% 0,
+            #4a2c1c 0,
+            var(--bg) 45%,
+            var(--bg2) 100%
+          )
+          fixed;
+        overflow-x: hidden;
+      }
+      .curtain {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        width: clamp(0px, 7vw, 110px);
+        z-index: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          90deg,
+          #5c0e18 0 10px,
+          #8f1a29 10px 22px,
+          #5c0e18 22px 30px
+        );
+        box-shadow: 0 0 30px #000 inset;
+      }
+      .curtain.l {
+        left: 0;
+        border-right: 3px solid var(--gold);
+      }
+      .curtain.r {
+        right: 0;
+        border-left: 3px solid var(--gold);
+      }
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 16px clamp(12px, 9vw, 130px) 120px;
+      }
+      header {
+        text-align: center;
+        padding: 20px 0 14px;
+      }
+      .marquee {
+        display: inline-block;
+        padding: 18px 34px 14px;
+        background: #120c0a;
+        border: 4px solid var(--gold);
+        box-shadow: 0 0 24px #d4af3766, inset 0 0 22px #000;
+        position: relative;
+        max-width: 100%;
+      }
+      .marquee::before,
+      .marquee::after {
+        content: "";
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        height: 8px;
+        background: radial-gradient(
+            circle,
+            #fff3b0 0 2.5px,
+            #f3d77a 3px,
+            transparent 4px
+          )
+          0 0/18px 8px repeat-x;
+        animation: bulb 1.6s steps(2) infinite;
+      }
+      .marquee::before {
+        top: 4px;
+      }
+      .marquee::after {
+        bottom: 4px;
+        animation-delay: 0.8s;
+      }
+      @keyframes bulb {
+        50% {
+          opacity: 0.35;
+        }
+      }
+      h1 {
+        margin: 0;
+        font-family: "Bungee", Impact, sans-serif;
+        font-weight: 400;
+        font-size: clamp(24px, 6vw, 52px);
+        letter-spacing: 0.04em;
+        color: #fff3b0;
+        text-shadow: 0 0 6px var(--gold), 0 0 18px var(--gold), 0 0 36px #e8832a;
+      }
+      .sub {
+        margin: 6px 0 0;
+        color: var(--gold2);
+        font-style: italic;
+        letter-spacing: 0.06em;
+        font-size: clamp(11px, 2.6vw, 16px);
+      }
+      .deco {
+        font-size: 28px;
+        letter-spacing: 12px;
+        margin-top: 10px;
+        filter: drop-shadow(0 2px 4px #000);
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .status b {
+        font-weight: 400;
+      }
+      .ok {
+        color: #8fd39a;
+      }
+      .busy {
+        color: var(--gold2);
+      }
+      .err {
+        color: #ff8a80;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      .reset {
+        background: none;
+        border: 1px solid var(--muted);
+        color: var(--muted);
+        padding: 8px 12px;
+        min-height: 36px;
+      }
+      .reset:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .save {
+        background: var(--gold);
+        color: #1a1208;
+        border: 2px solid #fff3b0;
+        padding: 8px 18px;
+        min-height: 44px;
+        font-weight: 700;
+      }
+      .save:hover {
+        background: var(--gold2);
+      }
+      .save:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      #exSt {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .tiers {
+        margin-top: 10px;
+        border: 3px solid var(--gold);
+        background: #0f0b0a;
+        box-shadow: 0 10px 30px #000a;
+      }
+      .row {
+        display: flex;
+        border-bottom: 2px solid #000;
+        min-width: 0;
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .label {
+        flex: 0 0 clamp(54px, 11vw, 96px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: "Bungee", Impact, sans-serif;
+        font-size: clamp(26px, 6vw, 46px);
+        color: #1a1208;
+        background: var(--c);
+        text-shadow: 0 1px 0 #ffffff55;
+      }
+      .label small {
+        font: 400 11px "Gowun Batang", serif;
+        margin-top: 2px;
+        opacity: 0.8;
+        text-align: center;
+        line-height: 1.2;
+      }
+      .zone {
+        flex: 1;
+        min-width: 0;
+        min-height: clamp(128px, 22vw, 184px);
+        padding: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-content: flex-start;
+        background: linear-gradient(180deg, #241a16, #191210);
+        border-left: 3px solid var(--c);
+        transition: background 0.15s;
+      }
+      .zone.over {
+        background: #3a2a14;
+        outline: 2px dashed var(--gold2);
+        outline-offset: -4px;
+      }
+      .zone.empty::after {
+        content: "여기에 영화를 놓으세요";
+        color: #6b5b48;
+        font-size: 13px;
+        align-self: center;
+        margin: 0 auto;
+      }
+      .pool-wrap {
+        margin-top: 26px;
+        border: 3px solid var(--gold);
+        background: #120c0a;
+        padding: 12px 12px 14px;
+      }
+      .pool-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .pool-head h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--gold2);
+      }
+      .add {
+        background: var(--red2);
+        color: #fff;
+        border: 2px solid var(--gold);
+        padding: 8px 16px;
+        min-height: 44px;
+        font-weight: 700;
+      }
+      .add:hover {
+        background: #c2273a;
+      }
+      .pool {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        min-height: 160px;
+        padding: 6px;
+        border: 1px dashed #5b4630;
+        transition: background 0.15s;
+      }
+      .pool.over {
+        background: #2e2112;
+        outline: 2px dashed var(--gold2);
+      }
+      .pool.empty::after {
+        content: "모든 영화를 배치했어요. 포스터를 이 곳에 놓으면 목록으로 돌아옵니다.";
+        color: var(--muted);
+        font-size: 13px;
+        margin: auto;
+        text-align: center;
+      }
+      .card {
+        flex: 0 0 auto;
+        width: clamp(78px, 17vw, 108px);
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        position: relative;
+        transition: transform 0.12s;
+      }
+      .card:hover,
+      .card:focus-visible {
+        transform: translateY(-4px) scale(1.05);
+        outline: none;
+        z-index: 2;
+      }
+      .card:hover .poster,
+      .card:focus-visible .poster {
+        box-shadow: 0 0 0 2px var(--gold2), 0 8px 18px #000;
+      }
+      .card.drag {
+        opacity: 0.35;
+      }
+      .poster {
+        aspect-ratio: 2/3;
+        border: 2px solid var(--gold);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(160deg, var(--p1), var(--p2));
+        box-shadow: 0 3px 8px #000a;
+        position: relative;
+        overflow: hidden;
+      }
+      .poster img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        -webkit-user-drag: none;
+      }
+      .poster .art::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent 0 3px,
+          #0000001a 3px 4px
+        );
+      }
+      .art {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .art .g {
+        font-size: clamp(30px, 7vw, 42px);
+        filter: drop-shadow(0 2px 3px #0008);
+        position: relative;
+      }
+      .art .y {
+        position: absolute;
+        bottom: 4px;
+        font-size: 10px;
+        color: #ffffffcc;
+        letter-spacing: 0.1em;
+      }
+      .ttl {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.25;
+        text-align: center;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
+      .del {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        z-index: 3;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid var(--gold);
+        background: var(--red2);
+        color: #fff;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0;
+      }
+      .ghost {
+        position: fixed;
+        z-index: 80;
+        pointer-events: none;
+        opacity: 0.85;
+        transform: scale(1.1) rotate(3deg);
+        filter: drop-shadow(0 8px 12px #000);
+      }
+      .menu {
+        position: fixed;
+        z-index: 50;
+        background: #120c0a;
+        border: 2px solid var(--gold);
+        box-shadow: 0 8px 24px #000;
+        padding: 8px;
+        width: min(230px, calc(100vw - 16px));
+      }
+      .menu p {
+        margin: 0 0 6px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        word-break: keep-all;
+      }
+      .menu .opts {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+      }
+      .menu button {
+        border: 0;
+        background: var(--c);
+        color: #1a1208;
+        font-family: "Bungee", Impact, sans-serif;
+        font-size: 18px;
+        padding: 0;
+        min-height: 44px;
+      }
+      .menu button:hover,
+      .menu button:focus-visible {
+        outline: 2px solid #fff;
+      }
+      .menu .wide {
+        grid-column: 1/-1;
+        background: #3a2a1c;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 13px;
+        min-height: 40px;
+      }
+      .menu .wide.danger {
+        background: var(--red2);
+        color: #fff;
+      }
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: #000c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+      }
+      .bg[hidden],
+      .menu[hidden] {
+        display: none;
+      }
+      .modal {
+        width: min(420px, 100%);
+        max-height: 100%;
+        overflow: auto;
+        background: #1a110d;
+        border: 3px solid var(--gold);
+        box-shadow: 0 0 30px #d4af3744, 0 12px 40px #000;
+        padding: 18px;
+      }
+      .modal h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        color: var(--gold2);
+      }
+      .modal label {
+        display: block;
+        margin: 10px 0 4px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .modal input[type="text"],
+      .modal select {
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 16px;
+        color: var(--text);
+        background: #0f0b0a;
+        border: 2px solid #5b4630;
+      }
+      .modal input:focus,
+      .modal select:focus {
+        outline: none;
+        border-color: var(--gold2);
+      }
+      .modal input[type="file"] {
+        width: 100%;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 4px 0 0;
+      }
+      .perr {
+        min-height: 20px;
+        margin: 10px 0 0;
+        color: #ff8a80;
+        font-size: 14px;
+      }
+      .btns {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      .btns button {
+        min-height: 44px;
+        padding: 8px 18px;
+        border: 2px solid var(--gold);
+        color: var(--text);
+        background: #2a1d15;
+      }
+      .btns .primary {
+        background: var(--red2);
+        color: #fff;
+        font-weight: 700;
+      }
+      .preview {
+        display: none;
+        width: 60px;
+        margin-top: 8px;
+        border: 2px solid var(--gold);
+        aspect-ratio: 2/3;
+        object-fit: cover;
+      }
+      .seats {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 46px;
+        z-index: 3;
+        pointer-events: none;
+        background: radial-gradient(
+              circle at 50% 100%,
+              #8f1a29 0 20px,
+              transparent 21px
+            )
+            0 0/54px 46px repeat-x,
+          linear-gradient(transparent, #000a);
+      }
+      .seats::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background: #4a0b14;
+      }
+      /* 태블릿: 티어 내부 가로 스크롤 */
+      @media (max-width: 900px) {
+        main {
+          padding-inline: clamp(10px, 4vw, 60px);
+        }
+        .curtain {
+          width: clamp(0px, 3vw, 30px);
+        }
+        .zone {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-color: var(--gold) #1a110d;
+        }
+        .pool {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          scrollbar-color: var(--gold) #1a110d;
+        }
+        .deco {
+          font-size: 24px;
+          letter-spacing: 8px;
+        }
+      }
+      /* 모바일 */
+      @media (max-width: 560px) {
+        .curtain,
+        .deco {
+          display: none;
+        }
+        main {
+          padding: 8px 8px 90px;
+        }
+        .marquee {
+          padding: 16px 16px 12px;
+        }
+        .card {
+          width: 84px;
+        }
+        .seats {
+          height: 30px;
+          background-size: 36px 30px;
+        }
+        .pool-head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .save {
+          width: 100%;
+        }
+        #exSt {
+          text-align: center;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .marquee::before,
+        .marquee::after {
+          animation: none;
+        }
+        .card {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="curtain l"></div>
+    <div class="curtain r"></div>
+    <main>
+      <header>
+        <div class="marquee">
+          <h1>MOVIE TIER LIST</h1>
+          <p class="sub">My Movie Collection, Ranked by Tier</p>
+        </div>
+        <div class="deco" aria-hidden="true">🎬 🍿 📽️ 🎞️</div>
+        <div class="status" aria-live="polite">
+          <b id="st" class="ok">● 자동 저장 켜짐</b
+          ><button class="reset" id="reset">전체 초기화</button>
+        </div>
+      </header>
+      <div class="toolbar">
+        <span id="exSt" role="status"></span
+        ><button class="save" id="saveImg">📷 이미지 저장</button>
+      </div>
+      <section class="tiers" id="tiers" aria-label="티어리스트"></section>
+      <section class="pool-wrap">
+        <div class="pool-head">
+          <h2>영화 목록</h2>
+          <button class="add" id="addBtn">+ 영화 추가</button>
+        </div>
+        <div class="pool" id="pool" data-zone="pool"></div>
+      </section>
+    </main>
+    <div class="seats" aria-hidden="true"></div>
+    <div class="menu" id="menu" hidden role="menu"></div>
+
+    <div class="bg" id="addBg" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addH">
+        <h3 id="addH">영화 추가</h3>
+        <label for="fTitle">영화 제목</label>
+        <input type="text" id="fTitle" maxlength="60" autocomplete="off" />
+        <label for="fFile">포스터 이미지 (선택)</label>
+        <input type="file" id="fFile" accept="image/*" />
+        <img class="preview" id="prev" alt="포스터 미리보기" />
+        <label for="fUrl">또는 이미지 주소</label>
+        <input
+          type="text"
+          id="fUrl"
+          placeholder="https://"
+          inputmode="url"
+          autocomplete="off"
+        />
+        <p class="hint">
+          파일을 고르면 이미지 주소보다 우선해요. 포스터가 없으면 기본 포스터가
+          표시돼요.
+        </p>
+        <label for="fTier">티어 (선택)</label>
+        <select id="fTier">
+          <option value="">미배치</option>
+        </select>
+        <p class="perr" id="perr" role="alert"></p>
+        <div class="btns">
+          <button id="addCancel">취소</button
+          ><button class="primary" id="addOk">추가</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg" id="cfBg" hidden>
+      <div
+        class="modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="cfMsg"
+      >
+        <h3 id="cfMsg"></h3>
+        <div class="btns">
+          <button id="cfNo">취소</button
+          ><button class="primary" id="cfYes">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const BASE = [
+        { id: 1, title: "기생충", g: "🪜", y: 2019, p: ["#2f4f3a", "#0e1a14"] },
+        {
+          id: 2,
+          title: "인터스텔라",
+          g: "🪐",
+          y: 2014,
+          p: ["#1c2b55", "#05060f"],
+        },
+        {
+          id: 3,
+          title: "라라랜드",
+          g: "🎹",
+          y: 2016,
+          p: ["#6a3d8f", "#1b2a6b"],
+        },
+        {
+          id: 4,
+          title: "센과 치히로의 행방불명",
+          g: "🏮",
+          y: 2001,
+          p: ["#c1442e", "#3d1a2a"],
+        },
+        {
+          id: 5,
+          title: "어벤져스: 엔드게임",
+          g: "🛡️",
+          y: 2019,
+          p: ["#4b2a7a", "#12091f"],
+        },
+        {
+          id: 6,
+          title: "범죄도시",
+          g: "🚔",
+          y: 2017,
+          p: ["#5a1b1b", "#120808"],
+        },
+        {
+          id: 7,
+          title: "타이타닉",
+          g: "🚢",
+          y: 1997,
+          p: ["#1f6f8b", "#0a1f2b"],
+        },
+        {
+          id: 8,
+          title: "토이 스토리",
+          g: "🤠",
+          y: 1995,
+          p: ["#2a7de1", "#c98a1a"],
+        },
+      ];
+      const TIERS = [
+        ["S", "최고 등급", "--S"],
+        ["A", "우수", "--A"],
+        ["B", "보통 이상", "--B"],
+        ["C", "보통 이하", "--C"],
+        ["D", "최하 등급", "--D"],
+      ];
+      const TK = TIERS.map((t) => t[0]);
+      const KEY = "movie-tier-list-v2",
+        OLD = "movie-tier-list-v1";
+      const $ = (s) => document.querySelector(s);
+      let state;
+
+      const allMovies = () => BASE.concat(state.custom);
+      const getM = (id) => allMovies().find((m) => m.id === id);
+      function fresh() {
+        const s = { custom: [], pool: BASE.map((m) => m.id) };
+        TK.forEach((k) => (s[k] = []));
+        return s;
+      }
+      function readJSON(k) {
+        try {
+          const r = localStorage.getItem(k);
+          return r ? JSON.parse(r) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+      function load() {
+        const s = fresh();
+        let d = readJSON(KEY),
+          legacy = false;
+        if (!d) {
+          d = readJSON(OLD);
+          legacy = !!d;
+        }
+        if (!d || typeof d !== "object") return s;
+        if (!legacy && Array.isArray(d.custom)) {
+          s.custom = d.custom
+            .filter(
+              (m) =>
+                m &&
+                Number.isInteger(m.id) &&
+                m.id >= 100 &&
+                typeof m.title === "string" &&
+                m.title.trim()
+            )
+            .map((m) => ({
+              id: m.id,
+              title: m.title,
+              img: typeof m.img === "string" ? m.img : null,
+              custom: true,
+            }));
+        }
+        const valid = new Set(BASE.concat(s.custom).map((m) => m.id)),
+          seen = new Set();
+        const out = { custom: s.custom };
+        [...TK, "pool"].forEach((k) => {
+          out[k] = (Array.isArray(d[k]) ? d[k] : []).filter(
+            (id) => valid.has(id) && !seen.has(id) && seen.add(id)
+          );
+        });
+        valid.forEach((id) => {
+          if (!seen.has(id)) out.pool.push(id);
+        });
+        return out;
+      }
+      function setStatus(t, c) {
+        const el = $("#st");
+        el.textContent = t;
+        el.className = c;
+      }
+      let timer;
+      function save() {
+        setStatus("● 저장 중…", "busy");
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+            setStatus("● 저장됨", "ok");
+          } catch (e) {
+            setStatus(
+              "⚠ 저장 실패: 저장 공간이 부족하거나 사용할 수 없어요",
+              "err"
+            );
+          }
+        }, 150);
+      }
+
+      /* 포스터 */
+      function hue(s) {
+        let h = 0;
+        for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360;
+        return h;
+      }
+      function artEl(m) {
+        const a = document.createElement("div");
+        a.className = "art";
+        const p = m.p || [
+          `hsl(${hue(m.title)} 45% 32%)`,
+          `hsl(${(hue(m.title) + 50) % 360} 50% 12%)`,
+        ];
+        a.style.background = `linear-gradient(160deg,${p[0]},${p[1]})`;
+        a.innerHTML = `<span class="g">${m.g || "🎞️"}</span>${
+          m.y ? `<span class="y">${m.y}</span>` : ""
+        }`;
+        return a;
+      }
+      function cardEl(id) {
+        const m = getM(id),
+          c = document.createElement("div");
+        c.className = "card";
+        c.draggable = true;
+        c.dataset.id = id;
+        c.tabIndex = 0;
+        c.setAttribute("role", "button");
+        c.setAttribute("aria-label", m.title + " — 티어 선택");
+        const po = document.createElement("div");
+        po.className = "poster";
+        if (m.img) {
+          const im = document.createElement("img");
+          im.alt = "";
+          im.draggable = false;
+          im.onerror = () => {
+            im.remove();
+            po.appendChild(artEl(m));
+          };
+          im.src = m.img;
+          po.appendChild(im);
+        } else po.appendChild(artEl(m));
+        const t = document.createElement("div");
+        t.className = "ttl";
+        t.textContent = m.title;
+        c.append(po, t);
+        if (m.custom) {
+          const d = document.createElement("button");
+          d.className = "del";
+          d.textContent = "✕";
+          d.setAttribute("aria-label", m.title + " 삭제");
+          c.appendChild(d);
+        }
+        return c;
+      }
+      function render() {
+        const box = $("#tiers");
+        box.innerHTML = "";
+        TIERS.forEach(([k, name, v]) => {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.style.setProperty("--c", `var(${v})`);
+          row.innerHTML = `<div class="label">${k}<small>${name}</small></div>`;
+          const z = document.createElement("div");
+          z.className = "zone";
+          z.dataset.zone = k;
+          state[k].forEach((id) => z.appendChild(cardEl(id)));
+          z.classList.toggle("empty", !state[k].length);
+          row.appendChild(z);
+          box.appendChild(row);
+        });
+        const p = $("#pool");
+        p.innerHTML = "";
+        state.pool.forEach((id) => p.appendChild(cardEl(id)));
+        p.classList.toggle("empty", !state.pool.length);
+      }
+      function move(id, zone, index) {
+        const from = [...TK, "pool"].find((k) => state[k].includes(id));
+        if (from === undefined || !state[zone]) return;
+        const old = state[from].indexOf(id);
+        state[from].splice(old, 1);
+        if (index == null || index > state[zone].length)
+          index = state[zone].length;
+        if (from === zone && old < index) index--;
+        state[zone].splice(index, 0, id);
+        render();
+        save();
+      }
+      function dropIndex(z, x, y) {
+        const zone = z.dataset.zone;
+        for (const c of z.querySelectorAll(".card:not(.drag)")) {
+          const r = c.getBoundingClientRect();
+          if (y < r.top || (y <= r.bottom && x < r.left + r.width / 2))
+            return state[zone].indexOf(+c.dataset.id);
+        }
+        return state[zone].length;
+      }
+      function clearOver() {
+        document
+          .querySelectorAll(".over")
+          .forEach((z) => z.classList.remove("over"));
+      }
+
+      /* 마우스 드래그 앤 드롭 */
+      let dragId = null;
+      document.addEventListener("dragstart", (e) => {
+        const c = e.target.closest && e.target.closest(".card");
+        if (!c) return;
+        dragId = +c.dataset.id;
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", String(dragId));
+        hideMenu();
+        setTimeout(() => c.classList.add("drag"), 0);
+      });
+      document.addEventListener("dragend", () => {
+        dragId = null;
+        clearOver();
+        document
+          .querySelectorAll(".card.drag")
+          .forEach((c) => c.classList.remove("drag"));
+      });
+      document.addEventListener("dragover", (e) => {
+        if (dragId == null) return;
+        const z = e.target.closest && e.target.closest("[data-zone]");
+        clearOver();
+        if (z) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          z.classList.add("over");
+        }
+      });
+      document.addEventListener("drop", (e) => {
+        if (dragId == null) return;
+        const z = e.target.closest && e.target.closest("[data-zone]");
+        clearOver();
+        if (!z) return;
+        e.preventDefault();
+        const id = dragId;
+        dragId = null;
+        move(id, z.dataset.zone, dropIndex(z, e.clientX, e.clientY));
+      });
+
+      /* 터치 드래그: 카드를 잠깐 길게 누른 뒤 끌기 (그 전에는 가로 스크롤) */
+      let t = null,
+        noClickUntil = 0;
+      function endTouch() {
+        if (!t) return;
+        clearTimeout(t.timer);
+        if (t.ghost) t.ghost.remove();
+        t.c.classList.remove("drag");
+        t.c.draggable = true;
+        clearOver();
+        t = null;
+      }
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          const c = e.target.closest && e.target.closest(".card");
+          if (!c || e.touches.length !== 1 || e.target.closest(".del")) return;
+          const p = e.touches[0];
+          c.draggable = false;
+          t = {
+            c,
+            id: +c.dataset.id,
+            x: p.clientX,
+            y: p.clientY,
+            lx: p.clientX,
+            ly: p.clientY,
+            on: false,
+            ghost: null,
+          };
+          t.timer = setTimeout(() => {
+            if (!t) return;
+            t.on = true;
+            hideMenu();
+            c.classList.add("drag");
+            const g = c.cloneNode(true);
+            g.classList.add("ghost");
+            g.style.width = c.offsetWidth + "px";
+            document.body.appendChild(g);
+            t.ghost = g;
+            place(t.lx, t.ly);
+            navigator.vibrate && navigator.vibrate(15);
+          }, 260);
+        },
+        { passive: true }
+      );
+      function place(x, y) {
+        if (t && t.ghost) {
+          t.ghost.style.left = x - t.ghost.offsetWidth / 2 + "px";
+          t.ghost.style.top = y - t.ghost.offsetHeight / 2 + "px";
+        }
+      }
+      function zoneAt(x, y) {
+        const el = document.elementFromPoint(x, y);
+        return el && el.closest ? el.closest("[data-zone]") : null;
+      }
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (!t) return;
+          const p = e.touches[0];
+          t.lx = p.clientX;
+          t.ly = p.clientY;
+          if (!t.on) {
+            if (Math.hypot(p.clientX - t.x, p.clientY - t.y) > 10) {
+              clearTimeout(t.timer);
+              t.c.draggable = true;
+              t = null;
+            }
+            return;
+          }
+          e.preventDefault();
+          place(p.clientX, p.clientY);
+          clearOver();
+          const z = zoneAt(p.clientX, p.clientY);
+          if (z) z.classList.add("over");
+          if (p.clientY < 70) scrollBy(0, -12);
+          else if (p.clientY > innerHeight - 70) scrollBy(0, 12);
+        },
+        { passive: false }
+      );
+      document.addEventListener("touchend", () => {
+        if (!t) return;
+        if (t.on) {
+          noClickUntil = Date.now() + 500;
+          const z = zoneAt(t.lx, t.ly),
+            id = t.id;
+          if (z) {
+            const idx = dropIndex(z, t.lx, t.ly);
+            endTouch();
+            move(id, z.dataset.zone, idx);
+            return;
+          }
+        }
+        endTouch();
+      });
+      document.addEventListener("touchcancel", endTouch);
+      document.addEventListener("contextmenu", (e) => {
+        if (t && e.target.closest && e.target.closest(".card"))
+          e.preventDefault();
+      });
+
+      /* 클릭 메뉴 */
+      const menu = $("#menu");
+      function hideMenu() {
+        menu.hidden = true;
+      }
+      function showMenu(card) {
+        const id = +card.dataset.id,
+          m = getM(id);
+        menu.innerHTML = `<p></p><div class="opts"></div>`;
+        menu.querySelector("p").textContent = m.title + " → 티어 선택";
+        const o = menu.querySelector(".opts");
+        TIERS.forEach(([k, , v]) => {
+          const b = document.createElement("button");
+          b.textContent = k;
+          b.style.setProperty("--c", `var(${v})`);
+          b.setAttribute("aria-label", k + " 티어로 이동");
+          b.onclick = () => {
+            hideMenu();
+            move(id, k);
+          };
+          o.appendChild(b);
+        });
+        const extra = (txt, fn, cls) => {
+          const b = document.createElement("button");
+          b.className = "wide " + (cls || "");
+          b.textContent = txt;
+          b.onclick = () => {
+            hideMenu();
+            fn();
+          };
+          o.appendChild(b);
+        };
+        if (!state.pool.includes(id))
+          extra("영화 목록으로 되돌리기", () => move(id, "pool"));
+        if (m.custom) extra("이 영화 삭제", () => askDelete(id), "danger");
+        menu.hidden = false;
+        const r = card.getBoundingClientRect(),
+          w = menu.offsetWidth,
+          h = menu.offsetHeight;
+        let y = r.bottom + 6;
+        if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+        menu.style.left =
+          Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+        menu.style.top = y + "px";
+        menu.querySelector("button").focus();
+      }
+      document.addEventListener("click", (e) => {
+        if (Date.now() < noClickUntil) return;
+        const d = e.target.closest && e.target.closest(".del");
+        if (d) {
+          askDelete(+d.closest(".card").dataset.id);
+          return;
+        }
+        const c = e.target.closest && e.target.closest(".card");
+        if (c) {
+          showMenu(c);
+          return;
+        }
+        if (!e.target.closest("#menu")) hideMenu();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          hideMenu();
+          closeAdd();
+          closeCf();
+        }
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          e.target.classList &&
+          e.target.classList.contains("card")
+        ) {
+          e.preventDefault();
+          showMenu(e.target);
+        }
+      });
+
+      /* 확인창 */
+      let cfFn = null;
+      function confirmBox(msg, fn) {
+        $("#cfMsg").textContent = msg;
+        cfFn = fn;
+        $("#cfBg").hidden = false;
+        $("#cfYes").focus();
+      }
+      function closeCf() {
+        $("#cfBg").hidden = true;
+        cfFn = null;
+      }
+      $("#cfNo").onclick = closeCf;
+      $("#cfYes").onclick = () => {
+        const f = cfFn;
+        closeCf();
+        f && f();
+      };
+      function askDelete(id) {
+        const m = getM(id);
+        if (!m || !m.custom) return;
+        confirmBox(
+          `'${m.title}'을(를) 삭제할까요? 티어리스트에서도 함께 사라져요.`,
+          () => {
+            state.custom = state.custom.filter((x) => x.id !== id);
+            [...TK, "pool"].forEach(
+              (k) => (state[k] = state[k].filter((x) => x !== id))
+            );
+            render();
+            save();
+          }
+        );
+      }
+      $("#reset").onclick = () =>
+        confirmBox(
+          "모든 배치를 초기화할까요? 직접 추가한 영화도 삭제돼요.",
+          () => {
+            state = fresh();
+            render();
+            save();
+          }
+        );
+
+      /* 영화 추가 */
+      let pendingImg = null;
+      TIERS.forEach(([k, n]) => {
+        const o = document.createElement("option");
+        o.value = k;
+        o.textContent = `${k} · ${n}`;
+        $("#fTier").appendChild(o);
+      });
+      function openAdd() {
+        pendingImg = null;
+        ["#fTitle", "#fUrl", "#fFile"].forEach((s) => ($(s).value = ""));
+        $("#fTier").value = "";
+        $("#perr").textContent = "";
+        $("#prev").style.display = "none";
+        $("#addBg").hidden = false;
+        $("#fTitle").focus();
+      }
+      function closeAdd() {
+        $("#addBg").hidden = true;
+      }
+      $("#addBtn").onclick = openAdd;
+      $("#addCancel").onclick = closeAdd;
+      $("#fFile").onchange = (e) => {
+        const f = e.target.files[0];
+        pendingImg = null;
+        $("#prev").style.display = "none";
+        if (!f) return;
+        if (!f.type.startsWith("image/")) {
+          $("#perr").textContent = "이미지 파일만 올릴 수 있어요.";
+          e.target.value = "";
+          return;
+        }
+        $("#perr").textContent = "";
+        const rd = new FileReader();
+        rd.onload = () => {
+          const im = new Image();
+          im.onload = () => {
+            /* 2:3 비율로 잘라 작게 줄여서 저장 */
+            const W = 300,
+              H = 450,
+              cv = document.createElement("canvas");
+            cv.width = W;
+            cv.height = H;
+            const s = Math.max(W / im.width, H / im.height),
+              w = im.width * s,
+              h = im.height * s;
+            cv.getContext("2d").drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+            pendingImg = cv.toDataURL("image/jpeg", 0.8);
+            $("#prev").src = pendingImg;
+            $("#prev").style.display = "block";
+          };
+          im.onerror = () => {
+            $("#perr").textContent =
+              "이미지를 읽지 못했어요. 다른 파일을 골라 주세요.";
+          };
+          im.src = rd.result;
+        };
+        rd.readAsDataURL(f);
+      };
+      const norm = (s) => s.replace(/\s+/g, "").toLowerCase();
+      $("#addOk").onclick = () => {
+        const title = $("#fTitle").value.trim(),
+          url = $("#fUrl").value.trim(),
+          tier = $("#fTier").value,
+          err = $("#perr");
+        if (!title) {
+          err.textContent = "영화 제목을 입력해 주세요.";
+          $("#fTitle").focus();
+          return;
+        }
+        if (allMovies().some((m) => norm(m.title) === norm(title))) {
+          err.textContent = "이미 목록에 있는 영화예요.";
+          return;
+        }
+        if (!pendingImg && url && !/^https?:\/\/\S+$/i.test(url)) {
+          err.textContent =
+            "이미지 주소는 http:// 또는 https://로 시작해야 해요.";
+          return;
+        }
+        const id = Math.max(99, ...state.custom.map((m) => m.id)) + 1;
+        state.custom.push({
+          id,
+          title,
+          img: pendingImg || url || null,
+          custom: true,
+        });
+        state[tier || "pool"].push(id);
+        closeAdd();
+        render();
+        save();
+      };
+
+      /* 티어리스트 PNG 저장: 화면 레이아웃과 별개로 고정 폭 1200px 캔버스에 직접 그려서 모든 기기에서 전체가 담기게 함 */
+      const TCOL = {
+        S: "#d4af37",
+        A: "#e8832a",
+        B: "#e6cf3a",
+        C: "#4ea85a",
+        D: "#7d7d7d",
+      };
+      function loadImg(src) {
+        return new Promise((res) => {
+          if (!src) return res(null);
+          const im = new Image(),
+            to = setTimeout(() => res(null), 6000);
+          im.crossOrigin = "anonymous";
+          im.onload = () => {
+            clearTimeout(to);
+            res(im);
+          };
+          im.onerror = () => {
+            clearTimeout(to);
+            res(null);
+          };
+          im.src = src;
+        });
+      }
+      function wrapLines(c, text, maxW, maxLines) {
+        let lines = [],
+          cur = "";
+        for (const ch of text) {
+          if (cur && c.measureText(cur + ch).width > maxW) {
+            lines.push(cur);
+            cur = ch;
+          } else cur += ch;
+        }
+        if (cur) lines.push(cur);
+        if (lines.length > maxLines) {
+          lines = lines.slice(0, maxLines);
+          let l = lines[maxLines - 1];
+          while (l.length > 1 && c.measureText(l + "…").width > maxW)
+            l = l.slice(0, -1);
+          lines[maxLines - 1] = l + "…";
+        }
+        return lines;
+      }
+      function rrect(c, x, y, w, h, r) {
+        c.beginPath();
+        if (c.roundRect) c.roundRect(x, y, w, h, r);
+        else c.rect(x, y, w, h);
+      }
+      function drawPoster(c, m, im, x, y, w, h) {
+        c.save();
+        c.beginPath();
+        c.rect(x, y, w, h);
+        c.clip();
+        if (im) {
+          const s = Math.max(w / im.width, h / im.height),
+            iw = im.width * s,
+            ih = im.height * s;
+          c.drawImage(im, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+        } else {
+          const p = m.p || [
+            `hsl(${hue(m.title)} 45% 32%)`,
+            `hsl(${(hue(m.title) + 50) % 360} 50% 12%)`,
+          ];
+          const g = c.createLinearGradient(x, y, x + w, y + h);
+          g.addColorStop(0, p[0]);
+          g.addColorStop(1, p[1]);
+          c.fillStyle = g;
+          c.fillRect(x, y, w, h);
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+          c.font = "42px serif";
+          c.fillStyle = "#fff";
+          c.fillText(m.g || "🎞️", x + w / 2, y + h / 2);
+          if (m.y) {
+            c.font = "11px sans-serif";
+            c.fillStyle = "#ffffffcc";
+            c.fillText(String(m.y), x + w / 2, y + h - 12);
+          }
+        }
+        c.restore();
+        c.strokeStyle = "#d4af37";
+        c.lineWidth = 2;
+        c.strokeRect(x + 1, y + 1, w - 2, h - 2);
+      }
+      async function buildPng() {
+        try {
+          await Promise.all([
+            document.fonts.load("48px Bungee"),
+            document.fonts.load('16px "Gowun Batang"'),
+          ]);
+        } catch (e) {}
+        const W = 1200,
+          X0 = 100,
+          CW = 1000,
+          LW = 120,
+          PW = 100,
+          PH = 150,
+          GAP = 12,
+          PAD = 12,
+          CARDH = PH + 4 + 36,
+          HEAD = 215,
+          FOOT = 110;
+        const ZW = CW - 6 - LW,
+          cols = Math.max(1, Math.floor((ZW - PAD * 2 + GAP) / (PW + GAP)));
+        const rows = TIERS.map(([k, n]) => {
+          const cnt = state[k].length,
+            r = Math.max(1, Math.ceil(cnt / cols));
+          return { k, n, r, h: PAD * 2 + r * CARDH + (r - 1) * GAP };
+        });
+        const tiersH = rows.reduce((a, x) => a + x.h + 2, 0) + 6,
+          H = HEAD + tiersH + FOOT;
+        const sc = Math.min(2, 12000 / H);
+        const imgs = {};
+        await Promise.all(
+          TK.flatMap((k) => state[k]).map(async (id) => {
+            imgs[id] = await loadImg(getM(id).img);
+          })
+        );
+        const cv = document.createElement("canvas");
+        cv.width = Math.round(W * sc);
+        cv.height = Math.round(H * sc);
+        const c = cv.getContext("2d");
+        c.scale(sc, sc);
+        /* 배경 */
+        let g = c.createRadialGradient(W / 2, 0, 0, W / 2, 0, H);
+        g.addColorStop(0, "#4a2c1c");
+        g.addColorStop(0.45, "#2a1a12");
+        g.addColorStop(1, "#14100e");
+        c.fillStyle = g;
+        c.fillRect(0, 0, W, H);
+        /* 커튼 */
+        for (const side of [0, 1]) {
+          c.save();
+          if (side) {
+            c.translate(W, 0);
+            c.scale(-1, 1);
+          }
+          for (let x = 0; x < 70; x += 30) {
+            c.fillStyle = "#5c0e18";
+            c.fillRect(x, 0, 10, H);
+            c.fillStyle = "#8f1a29";
+            c.fillRect(x + 10, 0, 12, H);
+            c.fillStyle = "#5c0e18";
+            c.fillRect(x + 22, 0, 8, H);
+          }
+          g = c.createLinearGradient(0, 0, 70, 0);
+          g.addColorStop(0, "rgba(0,0,0,0)");
+          g.addColorStop(1, "rgba(0,0,0,.6)");
+          c.fillStyle = g;
+          c.fillRect(0, 0, 70, H);
+          c.fillStyle = "#d4af37";
+          c.fillRect(70, 0, 3, H);
+          c.restore();
+        }
+        /* 간판 */
+        c.save();
+        c.shadowColor = "rgba(212,175,55,.5)";
+        c.shadowBlur = 24;
+        c.fillStyle = "#120c0a";
+        c.fillRect(280, 36, 640, 116);
+        c.restore();
+        c.strokeStyle = "#d4af37";
+        c.lineWidth = 4;
+        c.strokeRect(282, 38, 636, 112);
+        c.fillStyle = "#fff3b0";
+        for (let x = 296; x <= 904; x += 18) {
+          for (const y of [47, 141]) {
+            c.beginPath();
+            c.arc(x, y, 3, 0, 7);
+            c.fill();
+          }
+        }
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        let fs = 48;
+        c.font = `${fs}px Bungee, Impact, sans-serif`;
+        while (c.measureText("MOVIE TIER LIST").width > 560 && fs > 20) {
+          fs -= 2;
+          c.font = `${fs}px Bungee, Impact, sans-serif`;
+        }
+        c.save();
+        c.shadowColor = "#d4af37";
+        c.shadowBlur = 18;
+        c.fillStyle = "#fff3b0";
+        c.fillText("MOVIE TIER LIST", W / 2, 90);
+        c.restore();
+        c.font = 'italic 16px "Gowun Batang", Georgia, serif';
+        c.fillStyle = "#f3d77a";
+        c.fillText("My Movie Collection, Ranked by Tier", W / 2, 127);
+        c.font = "28px serif";
+        c.fillStyle = "#fff";
+        c.fillText("🎬  🍿  📽️  🎞️", W / 2, 182);
+        /* 티어 프레임 */
+        const fy = HEAD;
+        c.save();
+        c.shadowColor = "#000";
+        c.shadowBlur = 30;
+        c.shadowOffsetY = 10;
+        c.fillStyle = "#0f0b0a";
+        c.fillRect(X0, fy, CW, tiersH);
+        c.restore();
+        let y = fy + 3;
+        for (const r of rows) {
+          const col = TCOL[r.k],
+            zx = X0 + 3 + LW;
+          c.fillStyle = col;
+          c.fillRect(X0 + 3, y, LW, r.h);
+          c.fillStyle = "#1a1208";
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+          c.font = "56px Bungee, Impact, sans-serif";
+          c.fillText(r.k, X0 + 3 + LW / 2, y + r.h / 2 - 10);
+          c.font = '13px "Gowun Batang", serif';
+          c.fillText(r.n, X0 + 3 + LW / 2, y + r.h / 2 + 28);
+          g = c.createLinearGradient(0, y, 0, y + r.h);
+          g.addColorStop(0, "#241a16");
+          g.addColorStop(1, "#191210");
+          c.fillStyle = g;
+          c.fillRect(zx, y, ZW, r.h);
+          c.fillStyle = col;
+          c.fillRect(zx, y, 3, r.h);
+          state[r.k].forEach((id, i) => {
+            const m = getM(id),
+              cx = zx + 3 + PAD + (i % cols) * (PW + GAP),
+              cy = y + PAD + Math.floor(i / cols) * (CARDH + GAP);
+            drawPoster(c, m, imgs[id], cx, cy, PW, PH);
+            c.font = '13px "Gowun Batang", serif';
+            c.fillStyle = "#f1e4c8";
+            c.textAlign = "center";
+            c.textBaseline = "alphabetic";
+            wrapLines(c, m.title, PW + 8, 2).forEach((l, j) =>
+              c.fillText(l, cx + PW / 2, cy + PH + 17 + j * 15)
+            );
+          });
+          y += r.h;
+          c.fillStyle = "#000";
+          c.fillRect(X0 + 3, y, CW - 6, 2);
+          y += 2;
+        }
+        c.strokeStyle = "#d4af37";
+        c.lineWidth = 3;
+        c.strokeRect(X0 + 1.5, fy + 1.5, CW - 3, tiersH - 3);
+        /* 극장 좌석 */
+        g = c.createLinearGradient(0, H - FOOT, 0, H);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(0,0,0,.6)");
+        c.fillStyle = g;
+        c.fillRect(0, H - FOOT, W, FOOT);
+        for (let x = 8; x < W; x += 58) {
+          rrect(c, x, H - 78, 46, 54, 16);
+          c.fillStyle = "#8f1a29";
+          c.fill();
+          c.strokeStyle = "#5c0e18";
+          c.lineWidth = 2;
+          c.stroke();
+        }
+        c.fillStyle = "#4a0b14";
+        c.fillRect(0, H - 30, W, 30);
+        c.fillStyle = "#d4af37";
+        c.fillRect(0, H - 30, W, 3);
+        return new Promise((res, rej) =>
+          cv.toBlob((b) => (b ? res(b) : rej(new Error("toBlob"))), "image/png")
+        );
+      }
+      async function deliver(blob) {
+        const name = "movie-tier-list.png";
+        let dl = null;
+        try {
+          dl =
+            window.claude && claude.use ? await claude.use("downloads") : null;
+        } catch (e) {}
+        if (dl) {
+          try {
+            await dl.save({ filename: name, data: blob });
+            return "saved";
+          } catch (e) {
+            if (e && e.code === "declined") return "declined";
+            if (e && e.code === "too_large") throw e;
+          }
+        }
+        const file = new File([blob], name, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Movie Tier List" });
+            return "saved";
+          } catch (e) {
+            if (e && e.name === "AbortError") return "declined";
+          }
+        }
+        const u = URL.createObjectURL(blob),
+          a = document.createElement("a");
+        a.href = u;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 10000);
+        return "saved";
+      }
+      let exTimer;
+      function exMsg(t, cls) {
+        const el = $("#exSt");
+        el.textContent = t;
+        el.className = cls || "";
+        clearTimeout(exTimer);
+        if (cls !== "busy")
+          exTimer = setTimeout(() => (el.textContent = ""), 5000);
+      }
+      $("#saveImg").onclick = async () => {
+        const b = $("#saveImg");
+        b.disabled = true;
+        exMsg("이미지를 만드는 중…", "busy");
+        try {
+          const blob = await buildPng(),
+            r = await deliver(blob);
+          exMsg(
+            r === "saved" ? "✓ 이미지를 저장했어요" : "저장을 취소했어요",
+            r === "saved" ? "ok" : ""
+          );
+        } catch (e) {
+          exMsg("⚠ 이미지를 만들지 못했어요. 다시 시도해 주세요", "err");
+        } finally {
+          b.disabled = false;
+        }
+      };
+
+      state = load();
+      render();
+    </script>
+  </body>
+</html>

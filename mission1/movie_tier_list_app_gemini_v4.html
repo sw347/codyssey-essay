@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Tier List - 레트로 영화관</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <!-- html2canvas for Export to PNG Image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cinema: {
+                bg: "#120a08",
+                card: "#1d120f",
+                accent: "#d4af37",
+                gold: "#ffd700",
+                red: "#8b0000",
+                brightRed: "#e50914",
+                border: "#3a231d",
+              },
+              tier: {
+                S: "#ffd700",
+                A: "#ff7f50",
+                B: "#ffee55",
+                C: "#4caf50",
+                D: "#888888",
+              },
+            },
+            fontFamily: {
+              cinzel: ["Cinzel", "serif"],
+              sans: ["Noto Sans KR", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background-color: #120a08;
+        background-image: radial-gradient(#261410 1px, transparent 0);
+        background-size: 24px 24px;
+        color: #f3f4f6;
+        font-family: "Noto Sans KR", sans-serif;
+        overflow-x: hidden;
+      }
+
+      /* Cinema Curtain Deco */
+      .curtain-side-left,
+      .curtain-side-right {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        width: 32px;
+        z-index: 40;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          90deg,
+          #500606,
+          #500606 10px,
+          #8b0000 15px,
+          #300202 25px
+        );
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+      }
+      .curtain-side-left {
+        left: 0;
+        border-right: 2px solid #d4af37;
+      }
+      .curtain-side-right {
+        right: 0;
+        border-left: 2px solid #d4af37;
+      }
+
+      /* Marquee Light Bulbs Animation */
+      @keyframes bulbGlow {
+        0%,
+        100% {
+          opacity: 1;
+          filter: drop-shadow(0 0 6px #fff8d6);
+        }
+        50% {
+          opacity: 0.4;
+          filter: drop-shadow(0 0 1px #ffae00);
+        }
+      }
+      .bulb {
+        width: 10px;
+        height: 10px;
+        background-color: #fff4bd;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 5px #ffd700;
+      }
+      .bulb:nth-child(even) {
+        animation: bulbGlow 1.2s infinite alternate ease-in-out;
+      }
+      .bulb:nth-child(odd) {
+        animation: bulbGlow 1.2s infinite alternate-reverse ease-in-out;
+      }
+
+      /* Movie Card Drag & Hover */
+      .movie-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        touch-action: manipulation;
+        user-select: none;
+      }
+      .movie-card:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+      }
+      .movie-card.dragging {
+        opacity: 0.4;
+        transform: scale(0.95);
+      }
+
+      /* Drop Zone Drag Over Highlight */
+      .drop-zone.drag-over {
+        background-color: rgba(212, 175, 55, 0.15) !important;
+        border-color: #d4af37 !important;
+        box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.4);
+      }
+
+      /* Custom Scrollbars */
+      ::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1a0f0d;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #50271d;
+        border-radius: 4px;
+        border: 1px solid #d4af37;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #d4af37;
+      }
+
+      /* Vintage Gold Border Frame */
+      .gold-frame {
+        border: 2px solid #d4af37;
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8),
+          0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Floating Touch Drag Avatar */
+      #touch-drag-avatar {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.85;
+        transform: translate(-50%, -50%) scale(0.9);
+        transition: transform 0.05s ease;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen pb-12 px-3 sm:px-6 md:px-10">
+    <!-- Curtain Decorators -->
+    <div class="curtain-side-left hidden sm:block"></div>
+    <div class="curtain-side-right hidden sm:block"></div>
+
+    <!-- Main Container -->
+    <div class="max-w-6xl mx-auto pt-4 sm:pt-6">
+      <!-- CAPTURE TARGET CONTAINER (Captured for PNG Download) -->
+      <div id="capture-area" class="p-2 sm:p-4 rounded-xl bg-cinema-bg">
+        <!-- HEADER: Retro Cinema Marquee Sign -->
+        <header
+          class="relative mb-6 text-center bg-cinema-card gold-frame rounded-lg p-4 sm:p-6 overflow-hidden"
+        >
+          <!-- Top Light Bulbs Row -->
+          <div class="flex justify-between items-center px-4 mb-3">
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+          </div>
+
+          <!-- Title & Subtitle -->
+          <div class="relative z-10 py-2">
+            <h1
+              class="font-cinzel text-3xl sm:text-5xl md:text-6xl font-black tracking-wider text-cinema-accent drop-shadow-[0_4px_10px_rgba(212,175,55,0.5)]"
+            >
+              MOVIE TIER LIST
+            </h1>
+            <p
+              class="text-xs sm:text-sm font-medium tracking-widest text-amber-200/80 uppercase mt-2"
+            >
+              My Movie Collection, Ranked by Tier
+            </p>
+          </div>
+
+          <!-- Bottom Light Bulbs Row -->
+          <div class="flex justify-between items-center px-4 mt-3">
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+            <div class="bulb"></div>
+          </div>
+        </header>
+
+        <!-- MAIN TIER LIST SECTION -->
+        <main class="space-y-3 sm:space-y-4 mb-6" id="tier-rows-container">
+          <!-- Tier S -->
+          <div
+            class="tier-row flex flex-col sm:flex-row min-h-[110px] sm:min-h-[135px] bg-cinema-card gold-frame rounded-lg overflow-hidden"
+            data-tier="S"
+          >
+            <div
+              class="w-full sm:w-28 md:w-36 bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 text-black font-cinzel font-black text-3xl sm:text-4xl flex sm:flex-col items-center justify-between sm:justify-center p-3 shadow-md shrink-0"
+            >
+              <span>S</span>
+              <span
+                class="text-xs font-sans font-bold tracking-tight opacity-80 sm:mt-1"
+                >최고 등급</span
+              >
+            </div>
+            <div
+              class="drop-zone flex-1 p-2 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3 min-h-[90px] transition-colors"
+              data-tier="S"
+            ></div>
+          </div>
+
+          <!-- Tier A -->
+          <div
+            class="tier-row flex flex-col sm:flex-row min-h-[110px] sm:min-h-[135px] bg-cinema-card gold-frame rounded-lg overflow-hidden"
+            data-tier="A"
+          >
+            <div
+              class="w-full sm:w-28 md:w-36 bg-gradient-to-br from-orange-400 to-orange-600 text-black font-cinzel font-black text-3xl sm:text-4xl flex sm:flex-col items-center justify-between sm:justify-center p-3 shadow-md shrink-0"
+            >
+              <span>A</span>
+              <span
+                class="text-xs font-sans font-bold tracking-tight opacity-80 sm:mt-1"
+                >우수</span
+              >
+            </div>
+            <div
+              class="drop-zone flex-1 p-2 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3 min-h-[90px] transition-colors"
+              data-tier="A"
+            ></div>
+          </div>
+
+          <!-- Tier B -->
+          <div
+            class="tier-row flex flex-col sm:flex-row min-h-[110px] sm:min-h-[135px] bg-cinema-card gold-frame rounded-lg overflow-hidden"
+            data-tier="B"
+          >
+            <div
+              class="w-full sm:w-28 md:w-36 bg-gradient-to-br from-yellow-300 to-yellow-500 text-black font-cinzel font-black text-3xl sm:text-4xl flex sm:flex-col items-center justify-between sm:justify-center p-3 shadow-md shrink-0"
+            >
+              <span>B</span>
+              <span
+                class="text-xs font-sans font-bold tracking-tight opacity-80 sm:mt-1"
+                >보통 이상</span
+              >
+            </div>
+            <div
+              class="drop-zone flex-1 p-2 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3 min-h-[90px] transition-colors"
+              data-tier="B"
+            ></div>
+          </div>
+
+          <!-- Tier C -->
+          <div
+            class="tier-row flex flex-col sm:flex-row min-h-[110px] sm:min-h-[135px] bg-cinema-card gold-frame rounded-lg overflow-hidden"
+            data-tier="C"
+          >
+            <div
+              class="w-full sm:w-28 md:w-36 bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-cinzel font-black text-3xl sm:text-4xl flex sm:flex-col items-center justify-between sm:justify-center p-3 shadow-md shrink-0"
+            >
+              <span>C</span>
+              <span
+                class="text-xs font-sans font-bold tracking-tight opacity-80 sm:mt-1"
+                >보통 이하</span
+              >
+            </div>
+            <div
+              class="drop-zone flex-1 p-2 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3 min-h-[90px] transition-colors"
+              data-tier="C"
+            ></div>
+          </div>
+
+          <!-- Tier D -->
+          <div
+            class="tier-row flex flex-col sm:flex-row min-h-[110px] sm:min-h-[135px] bg-cinema-card gold-frame rounded-lg overflow-hidden"
+            data-tier="D"
+          >
+            <div
+              class="w-full sm:w-28 md:w-36 bg-gradient-to-br from-stone-400 to-stone-600 text-black font-cinzel font-black text-3xl sm:text-4xl flex sm:flex-col items-center justify-between sm:justify-center p-3 shadow-md shrink-0"
+            >
+              <span>D</span>
+              <span
+                class="text-xs font-sans font-bold tracking-tight opacity-80 sm:mt-1"
+                >최하 등급</span
+              >
+            </div>
+            <div
+              class="drop-zone flex-1 p-2 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3 min-h-[90px] transition-colors"
+              data-tier="D"
+            ></div>
+          </div>
+        </main>
+      </div>
+      <!-- END CAPTURE TARGET CONTAINER -->
+
+      <!-- CONTROL BAR -->
+      <div
+        class="mb-8 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm px-2 bg-cinema-card border border-cinema-border rounded-lg p-3"
+      >
+        <!-- Status Badge -->
+        <div
+          id="save-status"
+          class="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-amber-900/50 text-emerald-400"
+        >
+          <i class="fa-solid fa-cloud-arrow-up animate-pulse"></i>
+          <span id="save-status-text" class="font-medium">저장 완료</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button
+            id="btn-export-image"
+            class="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold px-3 py-1.5 rounded flex items-center gap-1.5 transition shadow"
+          >
+            <i class="fa-solid fa-download"></i>
+            <span>이미지 저장 (PNG)</span>
+          </button>
+          <button
+            id="btn-open-add-modal"
+            class="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-bold px-3 py-1.5 rounded flex items-center gap-1.5 transition shadow"
+          >
+            <i class="fa-solid fa-plus"></i>
+            <span>영화 추가</span>
+          </button>
+          <button
+            id="btn-reset-data"
+            class="bg-stone-800 hover:bg-red-950 text-stone-300 hover:text-red-200 border border-stone-700 hover:border-red-800 px-3 py-1.5 rounded flex items-center gap-1.5 transition"
+          >
+            <i class="fa-solid fa-rotate-right"></i>
+            <span class="hidden sm:inline">초기화</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- UNRANKED MOVIES POOL SECTION -->
+      <section
+        class="bg-cinema-card gold-frame rounded-lg p-4 sm:p-5 shadow-2xl relative"
+      >
+        <div
+          class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-cinema-border gap-2"
+        >
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clapperboard text-cinema-accent text-lg"></i>
+            <h2 class="font-bold text-base sm:text-lg text-amber-100">
+              미배치 영화 목록 (Unranked Pool)
+            </h2>
+            <span
+              id="unranked-count"
+              class="bg-amber-950 text-amber-300 text-xs px-2 py-0.5 rounded-full border border-amber-700/50"
+              >0</span
+            >
+          </div>
+          <p class="text-xs text-stone-400">
+            영화를 티어 구역으로 드래그하거나 클릭하여 등급을 부여하세요.
+          </p>
+        </div>
+
+        <!-- Drop Zone for Unranked -->
+        <div
+          id="unranked-drop-zone"
+          class="drop-zone min-h-[140px] p-2 flex flex-wrap items-center gap-3 rounded bg-black/30 border border-dashed border-stone-700 transition-colors"
+          data-tier="UNRANKED"
+        >
+          <!-- Movies will land here when unranked -->
+        </div>
+      </section>
+
+      <!-- FOOTER DECORATION -->
+      <footer class="mt-12 text-center text-xs text-stone-500 pb-6">
+        <p>© Movie Tier List - Retro Vintage Cinema Edition</p>
+        <p class="mt-1 text-stone-600">
+          포스터를 클릭하거나 드래그 앤 드롭하여 평가를 완료해보세요.
+        </p>
+      </footer>
+    </div>
+
+    <!-- MODAL 1: ADD MOVIE MODAL -->
+    <div
+      id="add-modal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-cinema-card gold-frame rounded-lg max-w-md w-full p-6 shadow-2xl relative text-stone-200"
+      >
+        <button
+          class="btn-close-modal absolute top-4 right-4 text-stone-400 hover:text-white text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <h3
+          class="font-cinzel text-xl font-bold text-cinema-accent mb-4 flex items-center gap-2"
+        >
+          <i class="fa-solid fa-film"></i> 새 영화 추가하기
+        </h3>
+
+        <form id="add-movie-form" class="space-y-4">
+          <div>
+            <label
+              class="block text-xs font-bold text-amber-200/90 uppercase mb-1"
+              >영화 제목 <span class="text-red-500">*</span></label
+            >
+            <input
+              type="text"
+              id="input-movie-title"
+              required
+              placeholder="예: 헤어질 결심"
+              class="w-full bg-black/60 border border-cinema-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cinema-accent"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-amber-200/90 uppercase mb-1"
+              >포스터 이미지 주소 (URL)</label
+            >
+            <input
+              type="url"
+              id="input-movie-url"
+              placeholder="https://example.com/poster.jpg"
+              class="w-full bg-black/60 border border-cinema-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cinema-accent"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-amber-200/90 uppercase mb-1"
+              >또는 포스터 파일 직접 선택</label
+            >
+            <input
+              type="file"
+              id="input-movie-file"
+              accept="image/*"
+              class="w-full text-xs text-stone-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-900/60 file:text-amber-200 hover:file:bg-amber-800"
+            />
+          </div>
+
+          <!-- NEW: Image Source / Attribution Input -->
+          <div>
+            <label
+              class="block text-xs font-bold text-amber-200/90 uppercase mb-1"
+              >이미지 출처 / 저작자 (선택)</label
+            >
+            <input
+              type="text"
+              id="input-movie-source"
+              placeholder="예: Unsplash / 작가명 또는 공식 포스터"
+              class="w-full bg-black/60 border border-cinema-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cinema-accent"
+            />
+            <p class="text-[11px] text-stone-400 mt-1">
+              저작권을 준수하기 위해 이미지의 출처나 작가명을 기록할 수
+              있습니다.
+            </p>
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-amber-200/90 uppercase mb-1"
+              >초기 배치 티어</label
+            >
+            <select
+              id="select-initial-tier"
+              class="w-full bg-black/60 border border-cinema-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-cinema-accent"
+            >
+              <option value="UNRANKED">미배치 (목록에 추가)</option>
+              <option value="S">S 등급 (최고)</option>
+              <option value="A">A 등급 (우수)</option>
+              <option value="B">B 등급 (보통 이상)</option>
+              <option value="C">C 등급 (보통 이하)</option>
+              <option value="D">D 등급 (최하)</option>
+            </select>
+          </div>
+
+          <div id="add-modal-error" class="text-xs text-red-400 hidden"></div>
+
+          <div
+            class="flex justify-end gap-2 pt-2 border-t border-cinema-border"
+          >
+            <button
+              type="button"
+              class="btn-close-modal px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-xs font-bold"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              class="px-5 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black rounded text-xs font-bold"
+            >
+              영화 추가
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 2: CLICK-TO-MOVE / EDIT MOVIE MODAL -->
+    <div
+      id="action-modal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-cinema-card gold-frame rounded-lg max-w-xs sm:max-w-sm w-full p-5 shadow-2xl relative text-stone-200 text-center"
+      >
+        <button
+          class="btn-close-action-modal absolute top-3 right-3 text-stone-400 hover:text-white text-lg"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Poster Preview -->
+        <div
+          class="w-24 h-36 mx-auto mb-3 rounded overflow-hidden shadow-lg border border-cinema-accent/40 bg-black flex items-center justify-center"
+        >
+          <img
+            id="action-movie-img"
+            src=""
+            alt=""
+            class="w-full h-full object-cover hidden"
+          />
+          <div
+            id="action-movie-fallback"
+            class="w-full h-full p-2 flex items-center justify-center text-xs font-bold bg-stone-900 text-amber-200 text-center"
+          ></div>
+        </div>
+
+        <h4
+          id="action-movie-title"
+          class="font-bold text-base text-white mb-0.5"
+        >
+          영화 제목
+        </h4>
+        <p
+          id="action-movie-source-text"
+          class="text-[11px] text-stone-400 mb-1 italic truncate"
+        >
+          출처: Unsplash
+        </p>
+        <p
+          id="action-movie-current-tier"
+          class="text-xs text-amber-400/80 mb-4"
+        >
+          현재 위치: S 등급
+        </p>
+
+        <p
+          class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2"
+        >
+          티어 이동 선택
+        </p>
+
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <button
+            data-target-tier="S"
+            class="btn-move-tier bg-amber-400 hover:bg-amber-300 text-black font-black py-2 rounded text-sm shadow"
+          >
+            S
+          </button>
+          <button
+            data-target-tier="A"
+            class="btn-move-tier bg-orange-500 hover:bg-orange-400 text-black font-black py-2 rounded text-sm shadow"
+          >
+            A
+          </button>
+          <button
+            data-target-tier="B"
+            class="btn-move-tier bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2 rounded text-sm shadow"
+          >
+            B
+          </button>
+          <button
+            data-target-tier="C"
+            class="btn-move-tier bg-emerald-500 hover:bg-emerald-400 text-black font-black py-2 rounded text-sm shadow"
+          >
+            C
+          </button>
+          <button
+            data-target-tier="D"
+            class="btn-move-tier bg-stone-500 hover:bg-stone-400 text-black font-black py-2 rounded text-sm shadow"
+          >
+            D
+          </button>
+          <button
+            data-target-tier="UNRANKED"
+            class="btn-move-tier bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold py-2 rounded text-xs border border-stone-600"
+          >
+            미배치
+          </button>
+        </div>
+
+        <div
+          id="action-delete-container"
+          class="pt-3 border-t border-cinema-border"
+        >
+          <button
+            id="btn-delete-movie"
+            class="w-full bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-200 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1.5"
+          >
+            <i class="fa-solid fa-trash-can"></i> 이 영화 삭제하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOUCH DRAG AVATAR -->
+    <div
+      id="touch-drag-avatar"
+      class="hidden pointer-events-none rounded overflow-hidden w-20 h-28 border-2 border-cinema-accent shadow-2xl bg-black"
+    >
+      <img id="touch-drag-img" src="" class="w-full h-full object-cover" />
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+      // -------------------------------------------------------------
+      // 1. DEFAULT DATA & STATE MANAGEMENT
+      // -------------------------------------------------------------
+      const DEFAULT_MOVIES = [
+        {
+          id: "m1",
+          title: "기생충",
+          poster:
+            "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 0,
+          isCustom: false,
+        },
+        {
+          id: "m2",
+          title: "인터스텔라",
+          poster:
+            "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 1,
+          isCustom: false,
+        },
+        {
+          id: "m3",
+          title: "라라랜드",
+          poster:
+            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 2,
+          isCustom: false,
+        },
+        {
+          id: "m4",
+          title: "센과 치히로의 행방불명",
+          poster:
+            "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 3,
+          isCustom: false,
+        },
+        {
+          id: "m5",
+          title: "어벤져스: 엔드게임",
+          poster:
+            "https://images.unsplash.com/photo-1635863138275-d9b33299680b?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 4,
+          isCustom: false,
+        },
+        {
+          id: "m6",
+          title: "범죄도시",
+          poster:
+            "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 5,
+          isCustom: false,
+        },
+        {
+          id: "m7",
+          title: "타이타닉",
+          poster:
+            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 6,
+          isCustom: false,
+        },
+        {
+          id: "m8",
+          title: "토이 스토리",
+          poster:
+            "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=400&q=80",
+          source: "Unsplash / CC0",
+          tier: "UNRANKED",
+          sortOrder: 7,
+          isCustom: false,
+        },
+      ];
+
+      const STORAGE_KEY = "movie_tier_list_app_v2";
+      let moviesState = [];
+      let activeSelectedMovieId = null;
+
+      // -------------------------------------------------------------
+      // 2. DOM ELEMENTS SELECTION
+      // -------------------------------------------------------------
+      const dropZones = document.querySelectorAll(".drop-zone");
+      const unrankedCountEl = document.getElementById("unranked-count");
+      const saveStatusEl = document.getElementById("save-status");
+      const saveStatusTextEl = document.getElementById("save-status-text");
+
+      // Modals
+      const addModal = document.getElementById("add-modal");
+      const actionModal = document.getElementById("action-modal");
+      const addMovieForm = document.getElementById("add-movie-form");
+      const addModalError = document.getElementById("add-modal-error");
+
+      // Buttons
+      const btnOpenAddModal = document.getElementById("btn-open-add-modal");
+      const btnResetData = document.getElementById("btn-reset-data");
+      const btnDeleteMovie = document.getElementById("btn-delete-movie");
+      const btnExportImage = document.getElementById("btn-export-image");
+
+      // -------------------------------------------------------------
+      // 3. INITIALIZATION & STORAGE
+      // -------------------------------------------------------------
+      function initApp() {
+        loadMoviesState();
+        renderAllMovies();
+        setupEventListeners();
+      }
+
+      function loadMoviesState() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            moviesState = JSON.parse(saved);
+          } catch (e) {
+            console.error("Failed to parse local storage data:", e);
+            moviesState = JSON.parse(JSON.stringify(DEFAULT_MOVIES));
+          }
+        } else {
+          moviesState = JSON.parse(JSON.stringify(DEFAULT_MOVIES));
+        }
+      }
+
+      function saveState() {
+        saveStatusEl.classList.remove("text-emerald-400");
+        saveStatusEl.classList.add("text-amber-400");
+        saveStatusTextEl.textContent = "저장 중...";
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(moviesState));
+          setTimeout(() => {
+            saveStatusEl.classList.remove("text-amber-400");
+            saveStatusEl.classList.add("text-emerald-400");
+            saveStatusTextEl.textContent = "저장 완료";
+          }, 300);
+        } catch (e) {
+          console.error("Storage error:", e);
+          saveStatusTextEl.textContent = "저장 실패";
+        }
+      }
+
+      // -------------------------------------------------------------
+      // 4. RENDERING LOGIC
+      // -------------------------------------------------------------
+      function renderAllMovies() {
+        dropZones.forEach((zone) => (zone.innerHTML = ""));
+
+        const sorted = [...moviesState].sort(
+          (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+        );
+
+        let unrankedCount = 0;
+
+        sorted.forEach((movie) => {
+          if (movie.tier === "UNRANKED") unrankedCount++;
+
+          const targetZone = document.querySelector(
+            `.drop-zone[data-tier="${movie.tier}"]`
+          );
+          if (targetZone) {
+            const card = createMovieCardDOM(movie);
+            targetZone.appendChild(card);
+          }
+        });
+
+        unrankedCountEl.textContent = unrankedCount;
+      }
+
+      function createMovieCardDOM(movie) {
+        const card = document.createElement("div");
+        card.className =
+          "movie-card relative group w-20 sm:w-24 md:w-28 flex-shrink-0 cursor-grab active:cursor-grabbing rounded overflow-hidden bg-black/80 border border-cinema-border shadow-md";
+        card.setAttribute("draggable", "true");
+        card.setAttribute("data-id", movie.id);
+
+        const posterWrapper = document.createElement("div");
+        posterWrapper.className =
+          "w-full h-28 sm:h-36 relative bg-stone-900 flex items-center justify-center overflow-hidden";
+
+        if (movie.poster) {
+          const img = document.createElement("img");
+          img.src = movie.poster;
+          img.alt = movie.title;
+          img.crossOrigin = "anonymous";
+          img.className =
+            "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105";
+          img.onerror = function () {
+            this.style.display = "none";
+            const fallback = document.createElement("div");
+            fallback.className =
+              "w-full h-full p-2 flex items-center justify-center text-center text-xs font-bold text-amber-200 bg-gradient-to-b from-stone-800 to-black";
+            fallback.textContent = movie.title;
+            posterWrapper.appendChild(fallback);
+          };
+          posterWrapper.appendChild(img);
+        } else {
+          const fallback = document.createElement("div");
+          fallback.className =
+            "w-full h-full p-2 flex items-center justify-center text-center text-xs font-bold text-amber-200 bg-gradient-to-b from-stone-800 to-black";
+          fallback.textContent = movie.title;
+          posterWrapper.appendChild(fallback);
+        }
+
+        const titleBar = document.createElement("div");
+        titleBar.className =
+          "p-1.5 bg-cinema-card border-t border-cinema-border text-center";
+        const titleText = document.createElement("p");
+        titleText.className =
+          "text-[11px] sm:text-xs font-semibold text-stone-200 truncate leading-tight";
+        titleText.textContent = movie.title;
+        titleBar.appendChild(titleText);
+
+        card.appendChild(posterWrapper);
+        card.appendChild(titleBar);
+
+        // Drag & Drop Listeners
+        card.addEventListener("dragstart", handleDragStart);
+        card.addEventListener("dragend", handleDragEnd);
+
+        // Touch Listeners
+        card.addEventListener("touchstart", handleTouchStart, {
+          passive: false,
+        });
+        card.addEventListener("touchmove", handleTouchMove, { passive: false });
+        card.addEventListener("touchend", handleTouchEnd);
+
+        // Click Event
+        card.addEventListener("click", () => {
+          if (card.dataset.touchDragging === "true") return;
+          openActionModal(movie.id);
+        });
+
+        return card;
+      }
+
+      // -------------------------------------------------------------
+      // 5. HTML5 DRAG AND DROP (PC)
+      // -------------------------------------------------------------
+      let draggedMovieId = null;
+
+      function handleDragStart(e) {
+        draggedMovieId = this.getAttribute("data-id");
+        this.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", draggedMovieId);
+        e.dataTransfer.effectAllowed = "move";
+      }
+
+      function handleDragEnd() {
+        this.classList.remove("dragging");
+        draggedMovieId = null;
+        dropZones.forEach((zone) => zone.classList.remove("drag-over"));
+      }
+
+      dropZones.forEach((zone) => {
+        zone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          zone.classList.add("drag-over");
+
+          const draggingCard = document.querySelector(".movie-card.dragging");
+          if (draggingCard) {
+            const afterElement = getDragAfterElement(zone, e.clientX);
+            if (afterElement == null) {
+              zone.appendChild(draggingCard);
+            } else {
+              zone.insertBefore(draggingCard, afterElement);
+            }
+          }
+        });
+
+        zone.addEventListener("dragleave", () => {
+          zone.classList.remove("drag-over");
+        });
+
+        zone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          zone.classList.remove("drag-over");
+          const movieId =
+            e.dataTransfer.getData("text/plain") || draggedMovieId;
+          if (!movieId) return;
+
+          const targetTier = zone.getAttribute("data-tier");
+          moveMovieToTier(movieId, targetTier, zone);
+        });
+      });
+
+      function getDragAfterElement(container, x) {
+        const draggableElements = [
+          ...container.querySelectorAll(".movie-card:not(.dragging)"),
+        ];
+
+        return draggableElements.reduce(
+          (closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = x - box.left - box.width / 2;
+            if (offset < 0 && offset > closest.offset) {
+              return { offset: offset, element: child };
+            } else {
+              return closest;
+            }
+          },
+          { offset: Number.NEGATIVE_INFINITY }
+        ).element;
+      }
+
+      // -------------------------------------------------------------
+      // 6. TOUCH DRAG POLYFILL
+      // -------------------------------------------------------------
+      let touchTargetCard = null;
+      let touchAvatar = document.getElementById("touch-drag-avatar");
+      let touchAvatarImg = document.getElementById("touch-drag-img");
+      let isTouchDragging = false;
+      let touchStartPos = { x: 0, y: 0 };
+
+      function handleTouchStart(e) {
+        const touch = e.touches[0];
+        touchStartPos = { x: touch.clientX, y: touch.clientY };
+        touchTargetCard = this;
+        touchTargetCard.dataset.touchDragging = "false";
+      }
+
+      function handleTouchMove(e) {
+        const touch = e.touches[0];
+        const dist = Math.hypot(
+          touch.clientX - touchStartPos.x,
+          touch.clientY - touchStartPos.y
+        );
+
+        if (dist > 8 && !isTouchDragging) {
+          isTouchDragging = true;
+          touchTargetCard.dataset.touchDragging = "true";
+          touchTargetCard.classList.add("opacity-40");
+
+          const imgEl = touchTargetCard.querySelector("img");
+          if (imgEl && imgEl.style.display !== "none") {
+            touchAvatarImg.src = imgEl.src;
+            touchAvatarImg.classList.remove("hidden");
+          } else {
+            touchAvatarImg.classList.add("hidden");
+          }
+          touchAvatar.classList.remove("hidden");
+        }
+
+        if (isTouchDragging) {
+          e.preventDefault();
+          touchAvatar.style.left = `${touch.clientX}px`;
+          touchAvatar.style.top = `${touch.clientY}px`;
+
+          const elementBelow = document.elementFromPoint(
+            touch.clientX,
+            touch.clientY
+          );
+          dropZones.forEach((z) => z.classList.remove("drag-over"));
+          if (elementBelow) {
+            const zone = elementBelow.closest(".drop-zone");
+            if (zone) zone.classList.add("drag-over");
+          }
+        }
+      }
+
+      function handleTouchEnd(e) {
+        if (isTouchDragging) {
+          const touch = e.changedTouches[0];
+          const elementBelow = document.elementFromPoint(
+            touch.clientX,
+            touch.clientY
+          );
+          if (elementBelow) {
+            const zone = elementBelow.closest(".drop-zone");
+            if (zone) {
+              const movieId = touchTargetCard.getAttribute("data-id");
+              const targetTier = zone.getAttribute("data-tier");
+              moveMovieToTier(movieId, targetTier, zone);
+            }
+          }
+        }
+
+        if (touchTargetCard) touchTargetCard.classList.remove("opacity-40");
+        touchAvatar.classList.add("hidden");
+        dropZones.forEach((z) => z.classList.remove("drag-over"));
+        isTouchDragging = false;
+        touchTargetCard = null;
+      }
+
+      // -------------------------------------------------------------
+      // 7. STATE UPDATE & MOVEMENT UTILS
+      // -------------------------------------------------------------
+      function moveMovieToTier(movieId, targetTier, containerZone) {
+        const movieIndex = moviesState.findIndex((m) => m.id === movieId);
+        if (movieIndex === -1) return;
+
+        moviesState[movieIndex].tier = targetTier;
+
+        if (containerZone) {
+          const cardsInZone = [
+            ...containerZone.querySelectorAll(".movie-card"),
+          ];
+          cardsInZone.forEach((card, idx) => {
+            const cId = card.getAttribute("data-id");
+            const mObj = moviesState.find((m) => m.id === cId);
+            if (mObj) mObj.sortOrder = idx;
+          });
+        }
+
+        saveState();
+        renderAllMovies();
+      }
+
+      // -------------------------------------------------------------
+      // 8. MODAL HANDLERS & CLICK-TO-MOVE
+      // -------------------------------------------------------------
+      function openActionModal(movieId) {
+        activeSelectedMovieId = movieId;
+        const movie = moviesState.find((m) => m.id === movieId);
+        if (!movie) return;
+
+        const actionTitle = document.getElementById("action-movie-title");
+        const actionSourceText = document.getElementById(
+          "action-movie-source-text"
+        );
+        const actionTier = document.getElementById("action-movie-current-tier");
+        const actionImg = document.getElementById("action-movie-img");
+        const actionFallback = document.getElementById("action-movie-fallback");
+
+        actionTitle.textContent = movie.title;
+        actionSourceText.textContent = `출처: ${movie.source || "직접 추가됨"}`;
+        actionTier.textContent = `현재 위치: ${
+          movie.tier === "UNRANKED" ? "미배치" : movie.tier + " 등급"
+        }`;
+
+        if (movie.poster) {
+          actionImg.src = movie.poster;
+          actionImg.classList.remove("hidden");
+          actionFallback.classList.add("hidden");
+          actionImg.onerror = () => {
+            actionImg.classList.add("hidden");
+            actionFallback.classList.remove("hidden");
+            actionFallback.textContent = movie.title;
+          };
+        } else {
+          actionImg.classList.add("hidden");
+          actionFallback.classList.remove("hidden");
+          actionFallback.textContent = movie.title;
+        }
+
+        btnDeleteMovie.style.display = movie.isCustom ? "flex" : "none";
+        actionModal.classList.remove("hidden");
+      }
+
+      function closeActionModal() {
+        actionModal.classList.add("hidden");
+        activeSelectedMovieId = null;
+      }
+
+      // -------------------------------------------------------------
+      // 9. EVENT LISTENERS SETUP & IMAGE EXPORT
+      // -------------------------------------------------------------
+      function setupEventListeners() {
+        btnOpenAddModal.addEventListener("click", () => {
+          addModalError.classList.add("hidden");
+          addMovieForm.reset();
+          addModal.classList.remove("hidden");
+        });
+
+        document.querySelectorAll(".btn-close-modal").forEach((btn) => {
+          btn.addEventListener("click", () => addModal.classList.add("hidden"));
+        });
+        document.querySelectorAll(".btn-close-action-modal").forEach((btn) => {
+          btn.addEventListener("click", closeActionModal);
+        });
+
+        document.querySelectorAll(".btn-move-tier").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            if (!activeSelectedMovieId) return;
+            const targetTier = e.currentTarget.getAttribute("data-target-tier");
+            moveMovieToTier(activeSelectedMovieId, targetTier, null);
+            closeActionModal();
+          });
+        });
+
+        btnDeleteMovie.addEventListener("click", () => {
+          if (!activeSelectedMovieId) return;
+          const movie = moviesState.find((m) => m.id === activeSelectedMovieId);
+          if (!movie) return;
+
+          if (confirm(`'${movie.title}' 영화를 삭제하시겠습니까?`)) {
+            moviesState = moviesState.filter(
+              (m) => m.id !== activeSelectedMovieId
+            );
+            saveState();
+            renderAllMovies();
+            closeActionModal();
+          }
+        });
+
+        addMovieForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          addModalError.classList.add("hidden");
+
+          const title = document
+            .getElementById("input-movie-title")
+            .value.trim();
+          let posterUrl = document
+            .getElementById("input-movie-url")
+            .value.trim();
+          const fileInput = document.getElementById("input-movie-file");
+          const sourceText = document
+            .getElementById("input-movie-source")
+            .value.trim();
+          const initialTier = document.getElementById(
+            "select-initial-tier"
+          ).value;
+
+          if (!title) {
+            showAddError("영화 제목을 입력해 주세요.");
+            return;
+          }
+
+          if (
+            moviesState.some(
+              (m) => m.title.toLowerCase() === title.toLowerCase()
+            )
+          ) {
+            showAddError("이미 목록에 존재하는 영화 제목입니다.");
+            return;
+          }
+
+          if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+              createNewMovie(title, evt.target.result, sourceText, initialTier);
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+          } else {
+            createNewMovie(title, posterUrl, sourceText, initialTier);
+          }
+        });
+
+        btnResetData.addEventListener("click", () => {
+          if (
+            confirm(
+              "모든 티어 배치와 추가된 영화 데이터가 초기화됩니다. 계속하시겠습니까?"
+            )
+          ) {
+            localStorage.removeItem(STORAGE_KEY);
+            loadMoviesState();
+            renderAllMovies();
+            saveState();
+          }
+        });
+
+        btnExportImage.addEventListener("click", exportTierListToPNG);
+      }
+
+      function exportTierListToPNG() {
+        const captureArea = document.getElementById("capture-area");
+        if (!captureArea) return;
+
+        const originalBtnText = btnExportImage.innerHTML;
+        btnExportImage.disabled = true;
+        btnExportImage.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>변환 중...</span>`;
+
+        html2canvas(captureArea, {
+          backgroundColor: "#120a08",
+          useCORS: true,
+          scale: 2,
+          logging: false,
+        })
+          .then((canvas) => {
+            const link = document.createElement("a");
+            link.download = `Movie_Tier_List_${new Date()
+              .toISOString()
+              .slice(0, 10)}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+
+            btnExportImage.disabled = false;
+            btnExportImage.innerHTML = originalBtnText;
+          })
+          .catch((err) => {
+            console.error("Image Export Error:", err);
+            alert("이미지 저장 중 오류가 발생했습니다. 다시 시도해 주세요.");
+            btnExportImage.disabled = false;
+            btnExportImage.innerHTML = originalBtnText;
+          });
+      }
+
+      function createNewMovie(title, poster, source, tier) {
+        const newMovie = {
+          id: "custom_" + Date.now(),
+          title: title,
+          poster: poster || "",
+          source: source || "사용자 등록",
+          tier: tier || "UNRANKED",
+          sortOrder: moviesState.length,
+          isCustom: true,
+        };
+
+        moviesState.push(newMovie);
+        saveState();
+        renderAllMovies();
+        addModal.classList.add("hidden");
+      }
+
+      function showAddError(msg) {
+        addModalError.textContent = msg;
+        addModalError.classList.remove("hidden");
+      }
+
+      window.addEventListener("DOMContentLoaded", initApp);
+    </script>
+  </body>
+</html>
